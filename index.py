@@ -2,6 +2,7 @@ import os
 
 import requests
 import discord
+import tzdata
 from datetime import datetime
 import zoneinfo
 from discord.ext import commands, tasks
@@ -50,6 +51,11 @@ async def notif_anomalie():
     now = datetime.now(paris_tz)
     diff = now - date
     is_within_30min = 30 * 60 > abs(diff.total_seconds()) > 25 * 60
+
+    for channel in channels:
+        await bot.get_channel(channel.id).send(
+            "test if ça marche... ou pas"
+        )
 
     if is_within_30min:
         for channel in channels:
