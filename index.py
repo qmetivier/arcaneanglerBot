@@ -37,6 +37,11 @@ def get_right_channels():
 @bot.event
 async def on_ready():
     print("Le bot est prêt.")
+    channels = get_right_channels()
+    for channel in channels:
+        await bot.get_channel(channel.id).send(
+            "test if ça marche... ou pas"
+        )
     notif_anomalie.start()
     notif_derby.start()
     notif_tournament.start()
