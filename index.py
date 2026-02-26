@@ -48,13 +48,6 @@ async def notif_anomalie():
     request = requests.request("GET", anomalie_url, headers=headers)
     if request.status_code != 200:
         return
-    for channel in channels:
-        await bot.get_channel(channel.id).send(
-            request.status_code
-        )
-        await bot.get_channel(channel.id).send(
-            request.json()
-        )
     next_spawn_time = request.json()['nextSpawnTime']
     date = datetime.fromisoformat(next_spawn_time.replace("Z", "+00:00"))
     paris_tz = zoneinfo.ZoneInfo("Europe/Paris")
