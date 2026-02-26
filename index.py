@@ -46,6 +46,8 @@ async def on_ready():
 async def notif_anomalie():
     channels = get_right_channels()
     request = requests.request("GET", anomalie_url, headers=headers)
+    if request.status_code != 200:
+        return
     for channel in channels:
         await bot.get_channel(channel.id).send(
             request.status_code
@@ -75,7 +77,10 @@ async def notif_anomalie():
 @tasks.loop(minutes=5)
 async def notif_derby():
     channels = get_right_channels()
-    derby_infos_upcoming = requests.request("GET", derby_url, headers=headers).json()['upcoming'][0]
+    request = requests.request("GET", derby_url, headers=headers)
+    if request.status_code != 200:
+        return
+    derby_infos_upcoming = request.json()['upcoming'][0]
     date_debut = datetime.fromisoformat(derby_infos_upcoming['start_time'].replace("Z", "+00:00"))
     paris_tz = zoneinfo.ZoneInfo("Europe/Paris")
     now = datetime.now(paris_tz)
@@ -92,7 +97,10 @@ async def notif_derby():
 @tasks.loop(minutes=5)
 async def notif_tournament():
     channels = get_right_channels()
-    tournament_infos_upcoming = requests.request("GET", tournament_url, headers=headers).json()['upcoming'][0]
+    request = requests.request("GET", tournament_url, headers=headers)
+    if request.status_code != 200:
+        return
+    tournament_infos_upcoming = request.json()['upcoming'][0]
     date_debut = datetime.fromisoformat(tournament_infos_upcoming['start_time'].replace("Z", "+00:00"))
     paris_tz = zoneinfo.ZoneInfo("Europe/Paris")
     now = datetime.now(paris_tz)
