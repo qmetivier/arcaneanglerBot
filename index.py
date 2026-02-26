@@ -6,6 +6,7 @@ from datetime import datetime
 import zoneinfo
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
@@ -36,11 +37,6 @@ def get_right_channels():
 @bot.event
 async def on_ready():
     print("Le bot est prêt.")
-    channels = get_right_channels()
-    for channel in channels:
-        await bot.get_channel(channel.id).send(
-            "test if ça marche... ou pas"
-        )
     notif_anomalie.start()
     notif_derby.start()
     notif_tournament.start()
@@ -49,7 +45,15 @@ async def on_ready():
 @tasks.loop(minutes=5)
 async def notif_anomalie():
     channels = get_right_channels()
-    next_spawn_time = requests.request("GET", anomalie_url, headers=headers).json()['nextSpawnTime']
+    request = requests.request("GET", anomalie_url, headers=headers)
+    for channel in channels:
+        await bot.get_channel(channel.id).send(
+            request.status_code
+        )
+        await bot.get_channel(channel.id).send(
+            request.json()
+        )
+    next_spawn_time = request.json()['nextSpawnTime']
     date = datetime.fromisoformat(next_spawn_time.replace("Z", "+00:00"))
     paris_tz = zoneinfo.ZoneInfo("Europe/Paris")
     now = datetime.now(paris_tz)
@@ -58,7 +62,7 @@ async def notif_anomalie():
 
     for channel in channels:
         await bot.get_channel(channel.id).send(
-            "test if ça marche... ou pas"
+            next_spawn_time + ": " + "Oui" if is_within_30min else "Nope"
         )
 
     if is_within_30min:
