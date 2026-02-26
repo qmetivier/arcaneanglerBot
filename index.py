@@ -55,11 +55,6 @@ async def notif_anomalie():
     diff = now - date
     is_within_30min = 30 * 60 > abs(diff.total_seconds()) > 25 * 60
 
-    for channel in channels:
-        await bot.get_channel(channel.id).send(
-            next_spawn_time + ": " + "Oui" if is_within_30min else "Nope"
-        )
-
     if is_within_30min:
         for channel in channels:
             await bot.get_channel(channel.id).send(
