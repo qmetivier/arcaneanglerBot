@@ -2,7 +2,6 @@ import os
 
 import requests
 import discord
-import tzdata
 from datetime import datetime
 import zoneinfo
 from discord.ext import commands, tasks
