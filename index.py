@@ -2,7 +2,7 @@ import os
 
 import requests
 import discord
-from datetime import datetime
+from datetime import datetime, timedelta
 import zoneinfo
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
@@ -14,6 +14,7 @@ bot = commands.Bot(command_prefix="p ", intents=discord.Intents.default())
 channel_name = os.getenv("CHANNEL")
 token = os.getenv("TOKEN")
 app_token = os.getenv("APP_TOKEN")
+utc_diff = float(os.getenv("UTC_DIFF"))
 
 base_url = "https://arcaneangler.com/api"
 anomalie_url = base_url + "/anomalies/current"
@@ -63,9 +64,14 @@ async def notif_anomalie():
 
     next_spawn_time = request.json()['nextSpawnTime']
     if is_within_30min(next_spawn_time):
+        date_debut = (
+                datetime.fromisoformat(next_spawn_time.replace("Z", "+00:00")) + timedelta(hours=utc_diff)
+        ).strftime("%H:%M")
         for channel in channels:
             await bot.get_channel(channel.id).send(
-                "<@&1476885924767076485> Une anomalie arrive dans moins de 30 minutes ! Chargez !!! Dans quelques minutes..."
+                "<@&1476885924767076485> Une anomalie arrive à "
+                + date_debut
+                + ". Chargez !!! Dans quelques minutes..."
             )
 
 
@@ -79,10 +85,18 @@ async def notif_derby():
     derby_infos_upcoming = request.json()['upcoming'][0]
 
     date_debut = derby_infos_upcoming['start_time']
+    if derby_infos_upcoming['biome_id'] > 15:
+        return
+
     if is_within_30min(date_debut):
+        date_debut = (
+                datetime.fromisoformat(date_debut.replace("Z", "+00:00")) + timedelta(hours=utc_diff)
+        ).strftime("%H:%M")
         for channel in channels:
             await bot.get_channel(channel.id).send(
-                "<@&1476885924767076485> Un derby commence dans moins de 30 minutes biome "
+                "<@&1476885924767076485> Un derby commence dans moins à "
+                + date_debut +
+                ", biome "
                 + str(derby_infos_upcoming['biome_id'])
                 + " ! Chargez !!! Dans quelques minutes..."
             )
@@ -98,10 +112,18 @@ async def notif_tournament():
     tournament_infos_upcoming = request.json()['upcoming'][0]
 
     date_debut = tournament_infos_upcoming['start_time']
+    if tournament_infos_upcoming['biome_id'] > 15:
+        return
+
     if is_within_30min(date_debut):
+        date_debut = (
+                datetime.fromisoformat(date_debut.replace("Z", "+00:00")) + timedelta(hours=utc_diff)
+        ).strftime("%H:%M")
         for channel in channels:
             await bot.get_channel(channel.id).send(
-                "<@&1476885924767076485> Un tournoie commence dans moins de 30 minutes biome "
+                "<@&1476885924767076485> Un tournoie commence à "
+                + date_debut +
+                ", biome "
                 + str(tournament_infos_upcoming['biome_id'])
                 + " ! Chargez !!! Dans quelques minutes..."
             )
