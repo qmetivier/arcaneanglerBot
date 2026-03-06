@@ -63,8 +63,8 @@ def is_within_30min(date_debut: str):
 @bot.event
 async def on_ready():
     print("Le bot est prêt.")
-    print(requests.request("GET", anomalie_url, headers=headers).status_code)
     reset_token()
+    print(requests.request("GET", anomalie_url, headers=headers).status_code)
     notif_anomalie.start()
     notif_derby.start()
     notif_tournament.start()
