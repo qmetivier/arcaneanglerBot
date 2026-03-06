@@ -13,18 +13,13 @@ load_dotenv()
 bot = commands.Bot(command_prefix="p ", intents=discord.Intents.default())
 channel_name = os.getenv("CHANNEL")
 token = os.getenv("TOKEN")
-app_token = os.getenv("APP_TOKEN")
 utc_diff = float(os.getenv("UTC_DIFF"))
 
 base_url = "https://arcaneangler.com/api"
+login_url = base_url + "/auth/login"
 anomalie_url = base_url + "/anomalies/current"
 derby_url = base_url + "/derby/current"
 tournament_url = base_url + "/guild/tournaments/current"
-headers = {
-    'content-type': "application/json",
-    'Authorization': "Bearer " + app_token,
-    'cache-control': "no-cache"
-}
 
 
 def get_right_channels():
@@ -34,6 +29,26 @@ def get_right_channels():
             channels.append(channel)
 
     return channels
+
+
+def reset_token():
+    global app_token, headers
+    body = {
+        "username": os.getenv("USER"),
+        "password": os.getenv("PASSWORD")
+    }
+
+    request = requests.request("POST", login_url, json=body)
+
+    if request.status_code != 200:
+        return
+
+    app_token = request.json()['token']
+    headers = {
+        'content-type': "application/json",
+        'Authorization': "Bearer " + app_token,
+        'cache-control': "no-cache"
+    }
 
 
 def is_within_30min(date_debut: str):
@@ -48,6 +63,7 @@ def is_within_30min(date_debut: str):
 @bot.event
 async def on_ready():
     print("Le bot est prêt.")
+    reset_token()
     notif_anomalie.start()
     notif_derby.start()
     notif_tournament.start()
@@ -57,12 +73,18 @@ async def on_ready():
 async def notif_anomalie():
     channels = get_right_channels()
     request = requests.request("GET", anomalie_url, headers=headers)
+
+    if request.status_code == 403:
+        reset_token()
+        request = requests.request("GET", anomalie_url, headers=headers)
+
     if request.status_code != 200:
         return
     if 'nextSpawnTime' not in request.json():
         return
 
     next_spawn_time = request.json()['nextSpawnTime']
+
     if is_within_30min(next_spawn_time):
         date_debut = (
                 datetime.fromisoformat(next_spawn_time.replace("Z", "+00:00")) + timedelta(hours=utc_diff)
@@ -79,6 +101,11 @@ async def notif_anomalie():
 async def notif_derby():
     channels = get_right_channels()
     request = requests.request("GET", derby_url, headers=headers)
+
+    if request.status_code == 403:
+        reset_token()
+        request = requests.request("GET", derby_url, headers=headers)
+
     if request.status_code != 200:
         return
 
@@ -94,7 +121,7 @@ async def notif_derby():
         ).strftime("%H:%M")
         for channel in channels:
             await bot.get_channel(channel.id).send(
-                "<@&1476885924767076485> Un derby commence dans moins à "
+                "<@&1476885924767076485> Un derby commence à "
                 + date_debut +
                 ", biome "
                 + str(derby_infos_upcoming['biome_id'])
@@ -106,6 +133,11 @@ async def notif_derby():
 async def notif_tournament():
     channels = get_right_channels()
     request = requests.request("GET", tournament_url, headers=headers)
+
+    if request.status_code == 403:
+        reset_token()
+        request = requests.request("GET", tournament_url, headers=headers)
+
     if request.status_code != 200:
         return
 
@@ -121,7 +153,7 @@ async def notif_tournament():
         ).strftime("%H:%M")
         for channel in channels:
             await bot.get_channel(channel.id).send(
-                "<@&1476885924767076485> Un tournoie commence à "
+                "<@&1476885924767076485> Un tournoi commence à "
                 + date_debut +
                 ", biome "
                 + str(tournament_infos_upcoming['biome_id'])
