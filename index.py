@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import zoneinfo
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import json
 
 load_dotenv()
 
@@ -14,6 +13,9 @@ bot = commands.Bot(command_prefix="p ", intents=discord.Intents.default())
 channel_name = os.getenv("CHANNEL")
 token = os.getenv("TOKEN")
 utc_diff = float(os.getenv("UTC_DIFF"))
+
+app_token = ""
+headers = {}
 
 base_url = "https://arcaneangler.com/api"
 login_url = base_url + "/auth/login"
@@ -39,6 +41,7 @@ def reset_token():
     }
 
     request = requests.request("POST", login_url, json=body)
+    print(request.status_code)
 
     if request.status_code != 200:
         return
@@ -64,7 +67,6 @@ def is_within_30min(date_debut: str):
 async def on_ready():
     print("Le bot est prêt.")
     reset_token()
-    print(requests.request("GET", anomalie_url, headers=headers).status_code)
     notif_anomalie.start()
     notif_derby.start()
     notif_tournament.start()
